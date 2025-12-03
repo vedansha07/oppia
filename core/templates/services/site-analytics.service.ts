@@ -22,6 +22,7 @@ import {Injectable} from '@angular/core';
 import {WindowRef} from 'services/contextual/window-ref.service';
 import {initializeGoogleAnalytics} from 'google-analytics.initializer';
 import {LocalStorageService} from './local-storage.service';
+import {UserService} from 'services/user.service';
 import {AppConstants} from 'app.constants';
 import {NavbarAndFooterGATrackingPages} from 'app.constants';
 
@@ -39,7 +40,8 @@ export class SiteAnalyticsService {
 
   constructor(
     private windowRef: WindowRef,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private userService: UserService
   ) {
     if (!SiteAnalyticsService.googleAnalyticsIsInitialized) {
       // This ensures that google analytics is initialized whenever this
@@ -53,7 +55,14 @@ export class SiteAnalyticsService {
     eventName: string,
     eventParameters: Object = {}
   ): void {
-    this.windowRef.nativeWindow.gtag('event', eventName, eventParameters);
+    this.userService.getUserInfoAsync().then(userInfo => {
+      const loginStatus = userInfo.isLoggedIn() ? 'logged_in' : 'logged_out';
+      const eventParams = {
+        ...eventParameters,
+        login_status: loginStatus,
+      };
+      this.windowRef.nativeWindow.gtag('event', eventName, eventParams);
+    });
   }
 
   // The srcElement refers to the element on the page that is clicked.

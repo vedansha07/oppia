@@ -16,10 +16,12 @@
  * @fileoverview Unit tests for SiteAnalyticsService.
  */
 
-import {TestBed} from '@angular/core/testing';
+import {TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {SiteAnalyticsService} from 'services/site-analytics.service';
 import {WindowRef} from 'services/contextual/window-ref.service';
 import {LocalStorageService} from 'services/local-storage.service';
+import {UserService} from 'services/user.service';
+import {UserInfo} from 'domain/user/user-info.model';
 import {NavbarAndFooterGATrackingPages} from 'app.constants';
 
 describe('Site Analytics Service', () => {
@@ -28,6 +30,7 @@ describe('Site Analytics Service', () => {
   let gtagSpy: jasmine.Spy;
   let pathname = 'pathname';
   let localStorageService: jasmine.SpyObj<LocalStorageService>;
+
   const explorationId = 'abc1';
 
   class MockWindowRef {
@@ -44,6 +47,10 @@ describe('Site Analytics Service', () => {
       'getLastPageViewTime',
       'setLastPageViewTime',
     ]);
+    const userServiceSpy = jasmine.createSpyObj('UserService', [
+      'getUserInfoAsync',
+    ]);
+    userServiceSpy.getUserInfoAsync.and.resolveTo(UserInfo.createDefault());
     TestBed.configureTestingModule({
       providers: [
         SiteAnalyticsService,
@@ -52,6 +59,7 @@ describe('Site Analytics Service', () => {
           useClass: MockWindowRef,
         },
         {provide: LocalStorageService, useValue: localStorageServiceSpy},
+        {provide: UserService, useValue: userServiceSpy},
       ],
     }).compileComponents();
 
@@ -69,410 +77,493 @@ describe('Site Analytics Service', () => {
       gtagSpy = spyOn(ws.nativeWindow, 'gtag');
     });
 
-    it('should register start login event', () => {
+    it('should register start login event', fakeAsync(() => {
       const element = 'LoginEventButton';
       sas.registerStartLoginEvent(element);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'login', {
         source_element: 'LoginEventButton',
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register new signup event', () => {
+    it('should register new signup event', fakeAsync(() => {
       sas.registerNewSignupEvent('srcElement');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'sign_up', {
         source_element: 'srcElement',
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register click browse lessons event', () => {
+    it('should register click browse lessons event', fakeAsync(() => {
       sas.registerClickBrowseLessonsButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'browse_lessons_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register click start learning button event', () => {
+    it('should register click start learning button event', fakeAsync(() => {
       sas.registerClickStartLearningButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'start_learning_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register click start contributing button event', () => {
+    it('should register click start contributing button event', fakeAsync(() => {
       sas.registerClickStartContributingButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'start_contributing_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register go to donation site event', () => {
+    it('should register go to donation site event', fakeAsync(() => {
       const donationSite = 'https://donation.com';
       sas.registerGoToDonationSiteEvent(donationSite);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'go_to_donation_site', {
         donation_site_name: donationSite,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register apply to teach with oppia event', () => {
+    it('should register apply to teach with oppia event', fakeAsync(() => {
       sas.registerApplyToTeachWithOppiaEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'apply_to_teach_with_oppia',
-        {}
+        {
+          login_status: 'logged_out',
+        }
       );
-    });
+    }));
 
-    it('should register click create exploration button event', () => {
+    it('should register click create exploration button event', fakeAsync(() => {
       sas.registerClickCreateExplorationButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'create_exploration_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register create new exploration event', () => {
+    it('should register create new exploration event', fakeAsync(() => {
       const explorationId = 'exp123';
       sas.registerCreateNewExplorationEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'create_new_exploration', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register create new exploration in collection event', () => {
+    it('should register create new exploration in collection event', fakeAsync(() => {
       const explorationId = 'exp123';
       sas.registerCreateNewExplorationInCollectionEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'create_new_exploration_in_collection',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register new collection event', () => {
+    it('should register new collection event', fakeAsync(() => {
       const collectionId = 'abc1';
       sas.registerCreateNewCollectionEvent(collectionId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'create_new_collection', {
         collection_id: collectionId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register commit changes to private exploration event', () => {
+    it('should register commit changes to private exploration event', fakeAsync(() => {
       const explorationId = 'exp123';
       sas.registerCommitChangesToPrivateExplorationEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'commit_changes_to_private_exploration',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register share exploration event', () => {
+    it('should register share exploration event', fakeAsync(() => {
       const network = 'ShareExplorationNetwork';
       sas.registerShareExplorationEvent(network);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'share_exploration', {
         network: network,
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register share collection event', () => {
+    it('should register share collection event', fakeAsync(() => {
       const network = 'ShareCollectionNetwork';
       sas.registerShareCollectionEvent(network);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'share_collection', {
         network: network,
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register share blog post event', () => {
+    it('should register share blog post event', fakeAsync(() => {
       const network = 'ShareBlogPostNetwork';
       sas.registerShareBlogPostEvent(network);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'share_blog_post', {
         network: network,
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register open embed info event', () => {
+    it('should register open embed info event', fakeAsync(() => {
       sas.registerOpenEmbedInfoEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'open_embed_info_modal', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register commit changes to public exploration event', () => {
+    it('should register commit changes to public exploration event', fakeAsync(() => {
       sas.registerCommitChangesToPublicExplorationEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'commit_changes_to_public_exploration',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register tutorial modal open event', () => {
+    it('should register tutorial modal open event', fakeAsync(() => {
       sas.registerTutorialModalOpenEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'tutorial_modal_open', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register decline tutorial modal event', () => {
+    it('should register decline tutorial modal event', fakeAsync(() => {
       sas.registerDeclineTutorialModalEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'decline_tutorial_modal', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register accept tutorial modal event', () => {
+    it('should register accept tutorial modal event', fakeAsync(() => {
       sas.registerAcceptTutorialModalEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'accept_tutorial_modal', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register click help button event', () => {
+    it('should register click help button event', fakeAsync(() => {
       sas.registerClickHelpButtonEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'click_help_button', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register visit help center event', () => {
+    it('should register visit help center event', fakeAsync(() => {
       sas.registerVisitHelpCenterEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'visit_help_center', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register open tutorial from help center event', () => {
+    it('should register open tutorial from help center event', fakeAsync(() => {
       sas.registerOpenTutorialFromHelpCenterEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'open_tutorial_from_help_center',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register skip tutorial event', () => {
+    it('should register skip tutorial event', fakeAsync(() => {
       sas.registerSkipTutorialEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'skip_tutorial', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register finish tutorial event', () => {
+    it('should register finish tutorial event', fakeAsync(() => {
       sas.registerFinishTutorialEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'finish_tutorial', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register editor first entry event', () => {
+    it('should register editor first entry event', fakeAsync(() => {
       sas.registerEditorFirstEntryEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'editor_first_entry', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register first open content box event', () => {
+    it('should register first open content box event', fakeAsync(() => {
       sas.registerFirstOpenContentBoxEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'first_open_content_box', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register first save content event', () => {
+    it('should register first save content event', fakeAsync(() => {
       sas.registerFirstSaveContentEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'first_save_content', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register first click add interaction event', () => {
+    it('should register first click add interaction event', fakeAsync(() => {
       sas.registerFirstClickAddInteractionEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'first_click_add_interaction',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register select interaction type event', () => {
+    it('should register select interaction type event', fakeAsync(() => {
       sas.registerFirstSelectInteractionTypeEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'first_select_interaction_type',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register first save interaction event', () => {
+    it('should register first save interaction event', fakeAsync(() => {
       sas.registerFirstSaveInteractionEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'first_save_interaction', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register first save rule event', () => {
+    it('should register first save rule event', fakeAsync(() => {
       sas.registerFirstSaveRuleEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'first_save_rule', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register first create second state event', () => {
+    it('should register first create second state event', fakeAsync(() => {
       sas.registerFirstCreateSecondStateEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'first_create_second_state',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register save playable exploration event', () => {
+    it('should register save playable exploration event', fakeAsync(() => {
       sas.registerSavePlayableExplorationEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'save_playable_exploration',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register open publish exploration modal event', () => {
+    it('should register open publish exploration modal event', fakeAsync(() => {
       sas.registerOpenPublishExplorationModalEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'open_publish_exploration_modal',
         {
           exploration_id: explorationId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register publish exploration event', () => {
+    it('should register publish exploration event', fakeAsync(() => {
       sas.registerPublishExplorationEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'publish_exploration', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register visit oppia from iframe event', () => {
+    it('should register visit oppia from iframe event', fakeAsync(() => {
       sas.registerVisitOppiaFromIframeEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'visit_oppia_from_iframe', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register new card when card number is less than 10', () => {
+    it('should register new card when card number is less than 10', fakeAsync(() => {
       const cardNumber = 1;
       sas.registerNewCard(cardNumber, 'abc1');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'new_card_load', {
         exploration_id: 'abc1',
         card_number: cardNumber,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
     it(
       'should register new card when card number is greather than 10 and' +
         " it's a multiple of 10",
-      () => {
+      fakeAsync(() => {
         const cardNumber = 20;
         sas.registerNewCard(cardNumber, 'abc1');
+        tick();
 
         expect(gtagSpy).toHaveBeenCalledWith('event', 'new_card_load', {
           exploration_id: 'abc1',
           card_number: cardNumber,
+          login_status: 'logged_out',
         });
-      }
+      })
     );
 
-    it('should not register new card', () => {
+    it('should not register new card', fakeAsync(() => {
       const cardNumber = 35;
       sas.registerNewCard(cardNumber, 'abc1');
+      tick();
 
       expect(gtagSpy).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should register finish exploration event', () => {
+    it('should register finish exploration event', fakeAsync(() => {
       sas.registerFinishExploration('123');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'lesson_completed', {
         exploration_id: '123',
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register finish curated lesson event', () => {
+    it('should register finish curated lesson event', fakeAsync(() => {
       sas.registerCuratedLessonStarted('Fractions', '123');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -480,11 +571,12 @@ describe('Site Analytics Service', () => {
         {
           topic_name: 'Fractions',
           exploration_id: '123',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register finish curated lesson event', () => {
+    it('should register finish curated lesson event', fakeAsync(() => {
       sas.registerCuratedLessonCompleted(
         'math',
         'Fractions',
@@ -494,6 +586,7 @@ describe('Site Analytics Service', () => {
         '3',
         'en'
       );
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -506,141 +599,166 @@ describe('Site Analytics Service', () => {
           chapter_number: '2',
           chapter_card_count: '3',
           exploration_language: 'en',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register open collection from landing page event', () => {
+    it('should register open collection from landing page event', fakeAsync(() => {
       const collectionId = 'abc1';
       sas.registerOpenCollectionFromLandingPageEvent(collectionId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'open_fractions_from_landing_page',
         {
           collection_id: collectionId,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register save recorded audio event', () => {
+    it('should register save recorded audio event', fakeAsync(() => {
       sas.registerSaveRecordedAudioEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'save_recorded_audio', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register audio recording event', () => {
+    it('should register audio recording event', fakeAsync(() => {
       sas.registerStartAudioRecordingEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'start_audio_recording', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register upload audio event', () => {
+    it('should register upload audio event', fakeAsync(() => {
       sas.registerUploadAudioEvent(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'upload_recorded_audio', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register Contributor Dashboard suggest event', () => {
+    it('should register Contributor Dashboard suggest event', fakeAsync(() => {
       const contributionType = 'Translation';
       sas.registerContributorDashboardSuggestEvent(contributionType);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'contributor_dashboard_suggest',
         {
           contribution_type: contributionType,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Contributor Dashboard submit suggestion event', () => {
+    it('should register Contributor Dashboard submit suggestion event', fakeAsync(() => {
       const contributionType = 'Translation';
       sas.registerContributorDashboardSubmitSuggestionEvent(contributionType);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'contributor_dashboard_submit_suggestion',
         {
           contribution_type: contributionType,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Contributor Dashboard view suggestion for review event', () => {
+    it('should register Contributor Dashboard view suggestion for review event', fakeAsync(() => {
       const contributionType = 'Translation';
       sas.registerContributorDashboardViewSuggestionForReview(contributionType);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'contributor_dashboard_view_suggestion_for_review',
         {
           contribution_type: contributionType,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Contributor Dashboard accept suggestion event', () => {
+    it('should register Contributor Dashboard accept suggestion event', fakeAsync(() => {
       const contributionType = 'Translation';
       sas.registerContributorDashboardAcceptSuggestion(contributionType);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'contributor_dashboard_accept_suggestion',
         {
           contribution_type: contributionType,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Contributor Dashboard reject suggestion event', () => {
+    it('should register Contributor Dashboard reject suggestion event', fakeAsync(() => {
       const contributionType = 'Translation';
       sas.registerContributorDashboardRejectSuggestion(contributionType);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'contributor_dashboard_reject_suggestion',
         {
           contribution_type: contributionType,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register active lesson usage', () => {
+    it('should register active lesson usage', fakeAsync(() => {
       sas.registerLessonActiveUse();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'active_user_start_and_saw_cards',
-        {}
+        {
+          login_status: 'logged_out',
+        }
       );
-    });
+    }));
 
-    it('should register exploration start', () => {
+    it('should register exploration start', fakeAsync(() => {
       sas.registerStartExploration(explorationId);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'lesson_started', {
         exploration_id: explorationId,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register classroom page viewed', () => {
+    it('should register classroom page viewed', fakeAsync(() => {
       spyOn(sas, '_sendEventToGoogleAnalytics');
 
       sas.registerClassroomPageViewed();
+      tick();
       expect(sas._sendEventToGoogleAnalytics).toHaveBeenCalledWith(
         'view_classroom',
         {}
       );
-    });
+    }));
 
-    it('should register active classroom lesson usage', () => {
+    it('should register active classroom lesson usage', fakeAsync(() => {
       let explorationId = '123';
       sas.registerClassroomLessonEngagedWithEvent(
         'math',
@@ -651,6 +769,7 @@ describe('Site Analytics Service', () => {
         '3',
         'en'
       );
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -663,55 +782,65 @@ describe('Site Analytics Service', () => {
           chapter_number: '2',
           chapter_card_count: '3',
           exploration_language: 'en',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register community lesson completed event', () => {
+    it('should register community lesson completed event', fakeAsync(() => {
       sas.registerCommunityLessonCompleted('exp_id');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'community_lesson_completed',
         {
           exploration_id: 'exp_id',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register community lesson started event', () => {
+    it('should register community lesson started event', fakeAsync(() => {
       sas.registerCommunityLessonStarted('exp_id');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'community_lesson_started',
         {
           exploration_id: 'exp_id',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register audio play event', () => {
+    it('should register audio play event', fakeAsync(() => {
       sas.registerStartAudioPlayedEvent('exp_id', 0);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'audio_played', {
         exploration_id: 'exp_id',
         card_number: 0,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register practice session start event', () => {
+    it('should register practice session start event', fakeAsync(() => {
       sas.registerPracticeSessionStartEvent('math', 'topic', '1,2,3');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'practice_session_start', {
         classroom_name: 'math',
         topic_name: 'topic',
         practice_session_id: '1,2,3',
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register practice session end event', () => {
+    it('should register practice session end event', fakeAsync(() => {
       sas.registerPracticeSessionEndEvent('math', 'topic', '1,2,3', 10, 10);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -722,39 +851,49 @@ describe('Site Analytics Service', () => {
           practice_session_id: '1,2,3',
           questions_answered: 10,
           total_score: 10,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register search results viewed event', () => {
+    it('should register search results viewed event', fakeAsync(() => {
       sas.registerSearchResultsViewedEvent();
+      tick();
 
-      expect(gtagSpy).toHaveBeenCalledWith('event', 'view_search_results', {});
-    });
+      expect(gtagSpy).toHaveBeenCalledWith('event', 'view_search_results', {
+        login_status: 'logged_out',
+      });
+    }));
 
-    it('should register homepage start learning button click event', () => {
+    it('should register homepage start learning button click event', fakeAsync(() => {
       sas.registerClickHomePageStartLearningButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'discovery_start_learning',
-        {}
+        {
+          login_status: 'logged_out',
+        }
       );
-    });
+    }));
 
-    it('should register submitted answer', () => {
+    it('should register submitted answer', fakeAsync(() => {
       const answerIsCorrect = true;
       sas.registerAnswerSubmitted(explorationId, answerIsCorrect);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'answer_submitted', {
         exploration_id: explorationId,
         answer_is_correct: answerIsCorrect,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register Volunteer CTA button click event', () => {
+    it('should register Volunteer CTA button click event', fakeAsync(() => {
       const srcElement = 'Volunteer with Oppia';
       sas.registerClickVolunteerCTAButtonEvent(srcElement);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -762,13 +901,15 @@ describe('Site Analytics Service', () => {
         {
           page_path: pathname,
           source_element: srcElement,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Partner CTA button click event', () => {
+    it('should register Partner CTA button click event', fakeAsync(() => {
       const srcElement = 'Partner with us at the top of the page';
       sas.registerClickPartnerCTAButtonEvent(srcElement);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -776,162 +917,172 @@ describe('Site Analytics Service', () => {
         {
           page_path: pathname,
           source_element: srcElement,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Donate CTA button click event', () => {
+    it('should register Donate CTA button click event', fakeAsync(() => {
       sas.registerClickDonateCTAButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'donate_cta_button_click', {
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register Get the Android App button click event', () => {
+    it('should register Get the Android App button click event', fakeAsync(() => {
       sas.registerClickGetAndroidAppButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'get_android_app_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Volunteer Learn more button click event', () => {
+    it('should register Volunteer Learn more button click event', fakeAsync(() => {
       sas.registerClickLearnMoreVolunteerButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'learn_more_volunteer_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Partner Learn more button click event', () => {
+    it('should register Partner Learn more button click event', fakeAsync(() => {
       sas.registerClickLearnMorePartnerButtonEvent();
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'learn_more_partner_button_click',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register Navbar button click events', () => {
+    it('should register navbar button click event', fakeAsync(() => {
       const buttonName = NavbarAndFooterGATrackingPages.ABOUT;
       sas.registerClickNavbarButtonEvent(buttonName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'navbar_button_click', {
         button_name: buttonName,
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register Footer button click events', () => {
+    it('should register footer button click event', fakeAsync(() => {
       const buttonName = NavbarAndFooterGATrackingPages.ABOUT;
       sas.registerClickFooterButtonEvent(buttonName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'footer_button_click', {
         button_name: buttonName,
         page_path: pathname,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should send first time page view in month event if time difference is more than one month', () => {
-      const thiryOneDaysInMillis = 31 * 24 * 60 * 60 * 1000;
-      const lastPageViewTime = new Date().getTime() - thiryOneDaysInMillis;
-      localStorageService.getLastPageViewTime.and.returnValue(lastPageViewTime);
-      const testKey = 'testKey';
-      sas.registerFirstTimePageViewEvent(testKey);
+    it('should register first time page view event', fakeAsync(() => {
+      localStorageService.getLastPageViewTime.and.returnValue(
+        new Date().getTime() - 10000000000
+      );
+      sas.registerFirstTimePageViewEvent('key');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'first_time_page_view_in_month',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-      expect(localStorageService.setLastPageViewTime).toHaveBeenCalledWith(
-        testKey
-      );
-    });
-
-    it('should send first time page view in week event if time difference is more than one week', () => {
-      const eightDaysInMillis = 8 * 24 * 60 * 60 * 1000;
-      const lastPageViewTime = new Date().getTime() - eightDaysInMillis;
-      localStorageService.getLastPageViewTime.and.returnValue(lastPageViewTime);
-      const testKey = 'testKey';
-      sas.registerFirstTimePageViewEvent(testKey);
-
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'first_time_page_view_in_week',
         {
           page_path: pathname,
+          login_status: 'logged_out',
         }
       );
-      expect(localStorageService.setLastPageViewTime).toHaveBeenCalledWith(
-        testKey
-      );
-    });
+    }));
 
-    it('should not send any event if time difference is less than one week', () => {
+    it('should not send any event if time difference is less than one week', fakeAsync(() => {
       const sixDaysInMillis = 6 * 24 * 60 * 60 * 1000;
       const lastPageViewTime = new Date().getTime() - sixDaysInMillis;
       localStorageService.getLastPageViewTime.and.returnValue(lastPageViewTime);
       const testKey = 'testKey';
       sas.registerFirstTimePageViewEvent(testKey);
+      tick();
 
       expect(gtagSpy).not.toHaveBeenCalled();
       expect(localStorageService.setLastPageViewTime).toHaveBeenCalledWith(
         testKey
       );
-    });
+    }));
 
-    it('should set last page view time if lastPageViewTime is null', () => {
+    it('should set last page view time if lastPageViewTime is null', fakeAsync(() => {
       localStorageService.getLastPageViewTime.and.returnValue(null);
       const testKey = 'testKey';
       sas.registerFirstTimePageViewEvent(testKey);
+      tick();
 
       expect(gtagSpy).not.toHaveBeenCalled();
       expect(localStorageService.setLastPageViewTime).toHaveBeenCalledWith(
         testKey
       );
-    });
+    }));
 
-    it('should register classroom card click event', () => {
-      const srcElement = 'Classroom card in the navigation dropdown';
-      sas.registerClickClassroomCardEvent(srcElement, 'Math');
+    it('should register classroom card click event', fakeAsync(() => {
+      const srcElement = 'Math';
+      const classroomName = 'Math';
+      sas.registerClickClassroomCardEvent(srcElement, classroomName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'classroom_card_click', {
         page_path: pathname,
         source_element: srcElement,
-        classroom_name: 'Math',
+        classroom_name: classroomName,
+        login_status: 'logged_out',
       });
-    });
+    }));
 
-    it('should register new classroom lesson card click event', () => {
-      sas.registerNewClassroomLessonEngagedWithEvent('Math', 'Addition');
+    it('should register new classroom lesson engaged with event', fakeAsync(() => {
+      const classroomName = 'Math';
+      const topicName = 'Fractions';
+      sas.registerNewClassroomLessonEngagedWithEvent(classroomName, topicName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'new_classroom_lesson_engaged_with',
         {
-          classroom_name: 'Math',
-          topic_name: 'Addition',
+          classroom_name: classroomName,
+          topic_name: topicName,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register in-progress classroom lesson card click event', () => {
+    it('should register in-progress classroom lesson card click event', fakeAsync(() => {
       sas.registerInProgressClassroomLessonEngagedWithEvent('Math', 'Addition');
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
@@ -939,52 +1090,55 @@ describe('Site Analytics Service', () => {
         {
           classroom_name: 'Math',
           topic_name: 'Addition',
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register diagnostic test completion event', () => {
-      const classroomName = 'Math101';
-
+    it('should register diagnostic test completion event', fakeAsync(() => {
+      const classroomName = 'Math';
       sas.registerDiagnosticTestCompletionEvent(classroomName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
         'diagnostic_test_completion',
         {
           classroom_name: classroomName,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register recommendation accepted event with topic ID', () => {
-      const classroomName = 'Math101';
-      const topicId = 'algebra-fundamentals';
-
-      sas.registerDiagnosticTestRecommendationAcceptedEvent(
+    it('should register classroom lesson in progress engaged with event', fakeAsync(() => {
+      const classroomName = 'Math';
+      const topicName = 'Fractions';
+      sas.registerInProgressClassroomLessonEngagedWithEvent(
         classroomName,
-        topicId
+        topicName
       );
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith(
         'event',
-        'diagnostic_test_recommendation_accepted',
+        'classroom_lesson_in_progress_engaged_with',
         {
           classroom_name: classroomName,
-          topic_id: topicId,
+          topic_name: topicName,
+          login_status: 'logged_out',
         }
       );
-    });
+    }));
 
-    it('should register diagnostic test started event', () => {
-      const classroomName = 'Math101';
-
-      expect(gtagSpy).not.toHaveBeenCalled();
+    it('should register diagnostic test started event', fakeAsync(() => {
+      const classroomName = 'Math';
       sas.registerDiagnosticTestStartedEvent(classroomName);
+      tick();
 
       expect(gtagSpy).toHaveBeenCalledWith('event', 'diagnostic_test_started', {
         classroom_name: classroomName,
+        login_status: 'logged_out',
       });
-    });
+    }));
   });
 });
